@@ -1,0 +1,2 @@
+# Kernik_Baseline_ICaPersistent_Mod_Huynh
+Used for KCNH2 Multichannel Manuscript
