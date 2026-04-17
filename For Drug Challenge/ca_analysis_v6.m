@@ -10,10 +10,10 @@ Cm = 60; %pF
 F = 96.4853415;   % coulomb_per_mmole (in model_parameters)
 
 %% Find first beat to analyze 1200 and 2400 originally | tried 1200 and 2400
-inds_time_1200=find(Time>1200);inds_time_1200=inds_time_1200(1);
-inds_time_2400=find(Time>2400); inds_time_2400=inds_time_2400(1);
-[~,inds1]=min(Ca(1:inds_time_1200));
-[~,inds2]=min(Ca(inds_time_1200:inds_time_2400)); inds2=inds_time_1200+inds2;
+inds_time_1500=find(Time>1500);inds_time_1500=inds_time_1500(1);
+inds_time_3000=find(Time>3000); inds_time_3000=inds_time_3000(1);
+[~,inds1]=min(Ca(1:inds_time_1500));
+[~,inds2]=min(Ca(inds_time_1500:inds_time_3000)); inds2=inds_time_1500+inds2;
 
 
 

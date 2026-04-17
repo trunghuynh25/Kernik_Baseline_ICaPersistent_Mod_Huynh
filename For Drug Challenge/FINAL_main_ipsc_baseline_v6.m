@@ -3,10 +3,7 @@ close all; clear; clc
 
 load ICs_baseline
 load baseline_parameter_inputs
-% For drug, Mexelitine, try 5 and 10 uM
-    % Example: Fractional conductance with IC50 of ~40uM, stimulating 10uM = 1 / (1 + (10 / 40)) = 0.80
 
-% For drug, Nifedipine, try 30 and 100 nM
 
 % ========================================================================
 %  START: EXPERIMENTAL CONFIGURATION BLOCK
@@ -86,6 +83,65 @@ else % Default to baseline if model_to_run is 0 or any other number
     plot_title = 'Baseline Model (Isogenic Control)';
 end
 
+% ========================================================================
+%  START: DRUG CHALLENGE BLOCK
+% ========================================================================
+% For drug, Mexelitine, try 5 and 10 uM
+    % Example: Fractional conductance with IC50 of ~40uM, stimulating 10uM = 1 / (1 + (10 / 40)) = 0.80
+% For drug, Nifedipine, try 30 and 100 nM
+
+% 0 = No Drug (Control)
+% 1 = Mexiletine (Target: INa Peak, INa Late)
+% 2 = Nifedipine (Target: ICaL Primary, ICaL Persistent)
+drug_to_run = 2; % <--- CHANGE THIS NUMBER TO SELECT YOUR DRUG
+drug_dose   = 30; % Enter dose (uM for Mexiletine, nM for Nifedipine)
+
+if drug_to_run == 1
+    % --- MEXILETINE ---
+    % Mexiletine IC50 values at 37C for mammalian/hiPSC-CM models
+    IC50_Mex_INa_peak = 40; % Best assumption: 40 uM (Range: 30 - 60 uM)
+    IC50_Mex_INa_late = 10; % Best assumption: 10 uM (Range: 5 - 20 uM)
+    Hill_Mex = 1;
+
+    % SELECTIVITY SWITCHES: 1 = Apply Block, 0 = No Block
+    apply_mex_to_peak_INa = 0; 
+    apply_mex_to_late_INa = 1; % Mex has preferential block for late Na over peak
+
+    if apply_mex_to_peak_INa
+        fract_cond_INa_peak = 1 / (1 + (drug_dose / IC50_Mex_INa_peak)^Hill_Mex);
+        modified_params(g_Na_index) = modified_params(g_Na_index) * fract_cond_INa_peak;
+    end
+
+    if apply_mex_to_late_INa
+        fract_cond_INa_late = 1 / (1 + (drug_dose / IC50_Mex_INa_late)^Hill_Mex);
+        modified_params(C_persist_NaL_index) = modified_params(C_persist_NaL_index) * fract_cond_INa_late;
+    end
+
+elseif drug_to_run == 2
+    % --- NIFEDIPINE ---
+    % Nifedipine IC50 values at 37C for mammalian/hiPSC-CM models
+    IC50_Nif_ICaL = 15; % Best assumption: 15 nM (Range: 10 - 30 nM)
+    Hill_Nif = 1;
+
+    % SELECTIVITY SWITCHES: 1 = Apply Block, 0 = No Block
+    apply_nif_to_peak_ICaL    = 1; % Nif blocks primary L-type Ca+ but because persisent fraction arises from defect in inactivation gating rather than fundmanetally distinct channel structure, the pore-blocking affinity for nifedipine is mathematically treated as identical for both primary and persistent components
+    apply_nif_to_persist_ICaL = 1;
+
+    % Calculate steady-state fractional block (assuming same pore affinity)
+    fract_cond_ICaL = 1 / (1 + (drug_dose / IC50_Nif_ICaL)^Hill_Nif);
+
+    if apply_nif_to_peak_ICaL
+        modified_params(p_CaL_index) = modified_params(p_CaL_index) * fract_cond_ICaL;
+    end
+
+    if apply_nif_to_persist_ICaL
+        modified_params(C_persist_CaL_index) = modified_params(C_persist_CaL_index) * fract_cond_ICaL;
+    end
+end
+% ========================================================================
+%  END: DRUG CHALLENGE BLOCK
+% ========================================================================
+
 % Overwrite the original variable with our modified one for the simulation
 baseline_parameter_inputs = modified_params;
 % ========================================================================
@@ -94,7 +150,7 @@ baseline_parameter_inputs = modified_params;
 %% iPSC_function
 
 options = odeset('MaxStep',1,'InitialStep',2e-2);
-run_time=10e3;
+run_time=10e3; 
 [Time, values] = ode15s(@ipsc_function,[0, run_time],Y_init, options, baseline_parameter_inputs);
 Cai=values(:,3);
 Vm=values(:,1);
@@ -140,10 +196,13 @@ ylim([-1 5]); % Zoom in to see the pulses
 
 [ca_results, validation_data] = ca_analysis_v6( Time, Iup, INaCa, IpCa, Cai, plot_title );
 %% ========================================================================
-
 %% =======================================================================
+%%
+% 
 %  START: TTP VALIDATION PLOT
 %  =======================================================================
+%
+
 figure, set(gcf,'color','w');
 hold on;
 
@@ -220,7 +279,6 @@ fprintf('\n## Table 2: %% Contribution of Calcium Flux ##\n');
 fprintf('%-30s | %-10.1f%%\n', 'SERCA', ca_results.pct_serca);
 fprintf('%-30s | %-10.1f%%\n', 'NCX', ca_results.pct_ncx);
 fprintf('%-30s | %-10.1f%%\n', 'Non-NCX (I_pCa)', ca_results.pct_ipca);
-
 %% Calculate and Display AP Morphology Table
 
     % --- C. NEW: Match variable names ---
@@ -237,8 +295,6 @@ fprintf('%-30s | %-10.1f%%\n', 'Non-NCX (I_pCa)', ca_results.pct_ipca);
     DisplayAPMorphologyTable(results);               % 3. Show the results table
     
     disp('Analysis complete.');
-
-
 %%
     function results = CalculateAPMorphology(time, voltage)
     % Calculates action potential morphology parameters using linear interpolation.
