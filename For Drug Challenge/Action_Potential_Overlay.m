@@ -17,9 +17,6 @@ num_models = 5;
 % Storage for traces
 all_time_ap = cell(1, num_models);
 all_vm = cell(1, num_models);
-% --- New storage for full run-time traces ---
-all_full_time = cell(1, num_models);
-all_full_vm = cell(1, num_models);
 
 % Storage for scalar stats (Rows: Models, Cols: Parameters)
 stats_matrix = zeros(num_models, 7);
@@ -59,7 +56,7 @@ for model_id = 0:(num_models - 1)
     elseif model_id == 2
         plot_title = 'Model 2 (IKr + INa,L)';
         modified_params(g_Kr_index) = modified_params(g_Kr_index) * (1 - 0.725);
-        modified_params(C_persist_NaL_index) = baseline_C_persist_NaL * 2.31 * 3;
+        modified_params(C_persist_NaL_index) = baseline_C_persist_NaL * 2.31 * 3; 
     elseif model_id == 3
         plot_title = 'Model 3 (IKr + ICa,L,P)';
         modified_params(g_Kr_index) = modified_params(g_Kr_index) * (1 - 0.725);
@@ -74,14 +71,10 @@ for model_id = 0:(num_models - 1)
     
     % --- 4. Run ODE Simulation ---
     options = odeset('MaxStep',1,'InitialStep',2e-2);
-    run_time = 10e3; % 6000 ms
+    run_time = 6e3; % 6000 ms
     [Time, values] = ode15s(@ipsc_function,[0, run_time],Y_init, options, modified_params);
     
     Vm = values(:,1);
-
-    % --- NEW: Store the full traces for the continuous overlay ---
-    all_full_time{model_id+1} = Time; 
-    all_full_vm{model_id+1} = Vm;
     
     % --- 5. Extract Beat (0ms - 3000ms window) ---
     inds_time_start = find(Time > 0, 1, 'first');
@@ -102,12 +95,12 @@ for model_id = 0:(num_models - 1)
     % Store stats
     stats_matrix(model_id+1, 1) = results.APD90;
     stats_matrix(model_id+1, 2) = results.APD50;
-    stats_matrix(model_id+1, 3) = results.APD30;
+    stats_matrix(model_id+1, 3) = results.APD30;  
     stats_matrix(model_id+1, 4) = results.dVdt_max;
     stats_matrix(model_id+1, 5) = results.APA;
-    stats_matrix(model_id+1, 6) = results.V_max;
-    stats_matrix(model_id+1, 7) = results.RMP;
-    
+    stats_matrix(model_id+1, 6) = results.V_max;  
+    stats_matrix(model_id+1, 7) = results.RMP;     
+
     fprintf('APD90: %.1f ms | dV/dt: %.1f V/s\n', results.APD90, results.dVdt_max);
 end
 
@@ -159,32 +152,6 @@ ylabel('dV/dt (V/s)');
 set(gca, 'XTickLabel', {'Baseline', 'M1', 'M2', 'M3', 'M4'});
 xtickangle(45);
 set(gca, 'box', 'off', 'tickdir', 'out');
-%% FIGURE: Full Continuous AP Overlay
-
-figure('Name', 'Continuous AP Traces', 'Color', 'w');
-hold on;
-
-% Use the same color scheme defined in your script
-colors = [0 0 0; 1 0 0; 0 0 0.8; 0 0.5 0; 0 0 0];
-
-for i = 1:num_models
-    line_style = '-'; 
-    if i == 5, line_style = '--'; end % Model 4 as dashed
-    
-    plot(all_full_time{i}, all_full_vm{i}, ...
-        'Color', colors(i,:), ...
-        'LineStyle', line_style, ...
-        'LineWidth', 1.2);
-end
-
-title('Action Potential Overlay: Full Run Time');
-xlabel('Time (ms)');
-ylabel('Voltage (mV)');
-legend(model_legends, 'Location', 'northeastoutside');
-legend boxoff;
-set(gca, 'box', 'off', 'tickdir', 'out');
-grid on;
-hold off;
 %% DATA TABLE
 
 fprintf('\n--- Action Potential Morphology Table ---\n');
@@ -240,10 +207,10 @@ get_apd = @(pct) interp1(voltage(idx_peak:end), time(idx_peak:end), V_max - (pct
 
 results.APD90 = get_apd(90);
 results.APD50 = get_apd(50);
-results.APD30 = get_apd(30);
+results.APD30 = get_apd(30);  
 results.dVdt_max = dVdt_max;
 results.APA = APA;
 results.RMP = RMP;
-results.V_max = V_max;
+results.V_max = V_max;        
 results.t_depol = t_depol;
 end

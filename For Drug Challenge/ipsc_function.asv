@@ -62,7 +62,7 @@ C_persist_NaL = model_parameter_inputs(87); % New parameter for persistent INaL
 % for stim:
 cyclelength=1000; %1000ms = 1hz beating | originally 800ms
 i_stim_Amplitude = 3;   % pA/pF (in stim_mode) | originally 3
-i_stim_End = 15e3;   % milisecond (in stim_mode) | originally 10e3
+i_stim_End = 10e3;   % milisecond (in stim_mode) | originally 10e3
 i_stim_PulseDuration = 5;   % milisecond (in stim_mode) | originally 5
 i_stim_Start = 0;   % milisecond (in stim_mode)
 
@@ -86,7 +86,7 @@ V_SR=V_tot*(VSR_tenT/V_tot_tenT);%=247.6 um^3 (6.3% total volume)
 
 % -------------------------------------------------------------------------------
 %% Constants
-T = 310.0;   % kelvin (in model_parameters)', 310 = 36.85 Celsius, 297 = 24 Celsius
+T = 310.0;   % kelvin (in model_parameters)'
 R = 8.314472;   % joule_per_mole_kelvin (in model_parameters)
 F = 96.4853415;   % coulomb_per_mmole (in model_parameters)
 
