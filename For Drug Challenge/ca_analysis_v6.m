@@ -15,18 +15,31 @@ F = 96.4853415;   % coulomb_per_mmole (in model_parameters)
 %[~,inds1]=min(Ca(1:inds_time_1500));
 %[~,inds2]=min(Ca(inds_time_1500:inds_time_3000)); inds2=inds_time_1500+inds2;
 
-%% Find the LAST beat to analyze (Ensures steady-state measurement)
-% Dynamically look at the last 2000 ms of the simulation
-inds_time_early = find(Time > (Time(end) - 2000), 1, 'first');
-inds_time_late  = find(Time > (Time(end) - 1000), 1, 'first');
+%% Find the LAST beat to analyze dynamically (Robust to missed early paces)
 
-% Find the diastolic minimum of the second-to-last beat
-[~, inds1_local] = min(Ca(inds_time_early : inds_time_late));
-inds1 = inds_time_early + inds1_local - 1;
+% 1. Find all peaks in the calcium transient array
+% MinPeakProminence filters out tiny noise or sub-threshold humps
+Ca_range = max(Ca) - min(Ca);
+[pks, locs] = findpeaks(Ca, 'MinPeakProminence', 0.2 * Ca_range);
 
-% Find the diastolic minimum of the final beat
-[~, inds2_local] = min(Ca(inds_time_late : end));
-inds2 = inds_time_late + inds2_local - 1;
+% Safety check to ensure we have enough beats to analyze
+if length(locs) < 2
+    error('Fewer than 2 calcium peaks detected. Please increase run_time in FINAL_main_ipsc_baseline_v6.m.');
+end
+
+% 2. Identify the indices of the last two peaks to define the final steady-state beat
+last_peak_idx = locs(end);
+prev_peak_idx = locs(end-1);
+
+% 3. Find the start of the final beat (inds1)
+% This is the diastolic minimum between the second-to-last peak and the last peak
+[~, min_idx_1] = min(Ca(prev_peak_idx:last_peak_idx));
+inds1 = prev_peak_idx + min_idx_1 - 1;
+
+% 4. Find the end of the final beat (inds2)
+% This is the diastolic minimum after the last peak
+[~, min_idx_2] = min(Ca(last_peak_idx:end));
+inds2 = last_peak_idx + min_idx_2 - 1;
 
 %% --- DEFINE BEAT VECTORS ---
 % This is the critical step that defines the 'ca_beat' variable
