@@ -15,7 +15,7 @@ load baseline_parameter_inputs
 % 2 = Model 2 (IKr + INa,L)
 % 3 = Model 3 (IKr + ICa,L)
 % 4 = Model 4 (All Three Defects)
-model_to_run = 0; % <--- CHANGE THIS NUMBER TO SELECT YOUR EXPERIMENT
+model_to_run = 4; % <--- CHANGE THIS NUMBER TO SELECT YOUR EXPERIMENT
 
 % --- 2. Define Parameter Indices ---
 g_Kr_index = 2;   % Conductance of IKr
@@ -93,8 +93,8 @@ end
 % 0 = No Drug (Control)
 % 1 = Mexiletine (Target: INa Peak, INa Late)
 % 2 = Nifedipine (Target: ICaL Primary, ICaL Persistent)
-drug_to_run = 1; % <--- CHANGE THIS NUMBER TO SELECT YOUR DRUG
-drug_dose   = 5; % Enter dose (uM for Mexiletine, nM for Nifedipine)
+drug_to_run = 0; % <--- CHANGE THIS NUMBER TO SELECT YOUR DRUG
+drug_dose   = 0; % Enter dose (uM for Mexiletine, nM for Nifedipine)
 
 if drug_to_run == 1
     % --- MEXILETINE ---
@@ -125,7 +125,7 @@ elseif drug_to_run == 2
 
     % SELECTIVITY SWITCHES: 1 = Apply Block, 0 = No Block
     apply_nif_to_peak_ICaL    = 1; % Nif blocks primary L-type Ca+ but because persisent fraction arises from defect in inactivation gating rather than fundmanetally distinct channel structure, the pore-blocking affinity for nifedipine is mathematically treated as identical for both primary and persistent components
-    apply_nif_to_persist_ICaL = 1;
+    apply_nif_to_persist_ICaL = 0;
 
     % Calculate steady-state fractional block (assuming same pore affinity)
     fract_cond_ICaL = 1 / (1 + (drug_dose / IC50_Nif_ICaL)^Hill_Nif);
@@ -150,7 +150,7 @@ baseline_parameter_inputs = modified_params;
 %% iPSC_function
 
 options = odeset('MaxStep',1,'InitialStep',2e-2);
-run_time=12e3; 
+run_time=15e3; 
 [Time, values] = ode15s(@ipsc_function,[0, run_time],Y_init, options, baseline_parameter_inputs);
 Cai=values(:,3);
 Vm=values(:,1);
