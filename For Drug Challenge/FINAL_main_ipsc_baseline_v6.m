@@ -15,7 +15,7 @@ load baseline_parameter_inputs
 % 2 = Model 2 (IKr + INa,L)
 % 3 = Model 3 (IKr + ICa,L)
 % 4 = Model 4 (All Three Defects)
-model_to_run = 0; % <--- CHANGE THIS NUMBER TO SELECT YOUR EXPERIMENT
+model_to_run = 1; % <--- CHANGE THIS NUMBER TO SELECT YOUR EXPERIMENT
 
 % --- 2. Define Parameter Indices ---
 g_Kr_index = 2;   % Conductance of IKr
@@ -150,7 +150,7 @@ baseline_parameter_inputs = modified_params;
 %% iPSC_function
 
 options = odeset('MaxStep',1,'InitialStep',2e-2);
-run_time=3e3; 
+run_time=10e3; 
 [Time, values] = ode15s(@ipsc_function,[0, run_time],Y_init, options, baseline_parameter_inputs);
 Cai=values(:,3);
 Vm=values(:,1);
