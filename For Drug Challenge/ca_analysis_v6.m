@@ -9,13 +9,24 @@ Vc=V_tot*(Vc_tenT/V_tot_tenT);
 Cm = 60; %pF
 F = 96.4853415;   % coulomb_per_mmole (in model_parameters)
 
-%% Find first beat to analyze 1200 and 2400 originally | tried 1200 and 2400
-inds_time_1500=find(Time>1500);inds_time_1500=inds_time_1500(1);
-inds_time_3000=find(Time>3000); inds_time_3000=inds_time_3000(1);
-[~,inds1]=min(Ca(1:inds_time_1500));
-[~,inds2]=min(Ca(inds_time_1500:inds_time_3000)); inds2=inds_time_1500+inds2;
+%% Find first beat to analyze 1200 and 2400 originally 
+%inds_time_1500=find(Time>1500);inds_time_1500=inds_time_1500(1);
+%inds_time_3000=find(Time>3000); inds_time_3000=inds_time_3000(1);
+%[~,inds1]=min(Ca(1:inds_time_1500));
+%[~,inds2]=min(Ca(inds_time_1500:inds_time_3000)); inds2=inds_time_1500+inds2;
 
+%% Find the LAST beat to analyze (Ensures steady-state measurement)
+% Dynamically look at the last 2000 ms of the simulation
+inds_time_early = find(Time > (Time(end) - 2000), 1, 'first');
+inds_time_late  = find(Time > (Time(end) - 1000), 1, 'first');
 
+% Find the diastolic minimum of the second-to-last beat
+[~, inds1_local] = min(Ca(inds_time_early : inds_time_late));
+inds1 = inds_time_early + inds1_local - 1;
+
+% Find the diastolic minimum of the final beat
+[~, inds2_local] = min(Ca(inds_time_late : end));
+inds2 = inds_time_late + inds2_local - 1;
 
 %% --- DEFINE BEAT VECTORS ---
 % This is the critical step that defines the 'ca_beat' variable
