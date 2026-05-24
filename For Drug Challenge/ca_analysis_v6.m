@@ -22,24 +22,26 @@ F = 96.4853415;   % coulomb_per_mmole (in model_parameters)
 Ca_range = max(Ca) - min(Ca);
 [pks, locs] = findpeaks(Ca, 'MinPeakProminence', 0.2 * Ca_range);
 
-% Safety check to ensure we have enough beats to analyze
-if length(locs) < 2
-    error('Fewer than 2 calcium peaks detected. Please increase run_time in FINAL_main_ipsc_baseline_v6.m.');
+% Safety check: We now need at least 3 peaks to ensure we have a fully bounded inner beat
+if length(locs) < 3
+    error('Fewer than 3 calcium peaks detected. Please increase run_time in FINAL_main_ipsc_baseline_v6.m.');
 end
 
-% 2. Identify the indices of the last two peaks to define the final steady-state beat
-last_peak_idx = locs(end);
-prev_peak_idx = locs(end-1);
+% 2. Identify the indices of the peaks to define the steady-state beat
+% Use the second-to-last peak to ensure the transient decay is not cut off by the end of the simulation
+next_peak_idx   = locs(end);
+target_peak_idx = locs(end-1);
+prev_peak_idx   = locs(end-2);
 
 % 3. Find the start of the final beat (inds1)
-% This is the diastolic minimum between the second-to-last peak and the last peak
-[~, min_idx_1] = min(Ca(prev_peak_idx:last_peak_idx));
+% Diastolic minimum between the previous peak and our target peak
+[~, min_idx_1] = min(Ca(prev_peak_idx:target_peak_idx));
 inds1 = prev_peak_idx + min_idx_1 - 1;
 
 % 4. Find the end of the final beat (inds2)
-% This is the diastolic minimum after the last peak
-[~, min_idx_2] = min(Ca(last_peak_idx:end));
-inds2 = last_peak_idx + min_idx_2 - 1;
+% Diastolic minimum bounded by the NEXT peak, completely avoiding end-of-array truncation
+[~, min_idx_2] = min(Ca(target_peak_idx:next_peak_idx));
+inds2 = target_peak_idx + min_idx_2 - 1;
 
 %% --- DEFINE BEAT VECTORS ---
 % This is the critical step that defines the 'ca_beat' variable
