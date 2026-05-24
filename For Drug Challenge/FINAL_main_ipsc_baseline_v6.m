@@ -15,7 +15,7 @@ load baseline_parameter_inputs
 % 2 = Model 2 (IKr + INa,L)
 % 3 = Model 3 (IKr + ICa,L)
 % 4 = Model 4 (All Three Defects)
-model_to_run = 1; % <--- CHANGE THIS NUMBER TO SELECT YOUR EXPERIMENT
+model_to_run = 4; % <--- CHANGE THIS NUMBER TO SELECT YOUR EXPERIMENT
 
 % --- 2. Define Parameter Indices ---
 g_Kr_index = 2;   % Conductance of IKr
@@ -93,8 +93,8 @@ end
 % 0 = No Drug (Control)
 % 1 = Mexiletine (Target: INa Peak, INa Late)
 % 2 = Nifedipine (Target: ICaL Primary, ICaL Persistent)
-drug_to_run = 2; % <--- CHANGE THIS NUMBER TO SELECT YOUR DRUG
-drug_dose   = 30; % Enter dose (uM for Mexiletine, nM for Nifedipine)
+drug_to_run = 1; % <--- CHANGE THIS NUMBER TO SELECT YOUR DRUG
+drug_dose   = 10; % Enter dose (uM for Mexiletine, nM for Nifedipine)
 
 if drug_to_run == 1
     % --- MEXILETINE ---
@@ -104,7 +104,7 @@ if drug_to_run == 1
     Hill_Mex = 1;
 
     % SELECTIVITY SWITCHES: 1 = Apply Block, 0 = No Block
-    apply_mex_to_peak_INa = 0; 
+    apply_mex_to_peak_INa = 0; % Originally 0
     apply_mex_to_late_INa = 1; % Mex has preferential block for late Na over peak
 
     if apply_mex_to_peak_INa
@@ -294,6 +294,52 @@ fprintf('%-30s | %-10.1f%%\n', 'Non-NCX (I_pCa)', ca_results.pct_ipca);
     DisplayAPMorphology(time, voltage, results);     % 2. Create the plot
     DisplayAPMorphologyTable(results);               % 3. Show the results table
     
+    % ========================================================================
+    %  START: EXPORT DATA TO EXCEL
+    % ========================================================================
+    disp('Exporting results to Excel...');
+
+    % 1. Convert Calcium Results to a single-row table
+    % 'AsArray', true ensures scalar fields become a single row
+    ca_table = struct2table(ca_results, 'AsArray', true);
+
+    % 2. Extract scalar AP values to avoid array dimension issues
+    % (The t_rep and v_rep variables inside 'results' are arrays, which make exporting messy)
+    ap_export.RMP = results.RMP;
+    ap_export.APA = results.APA;
+    ap_export.V_max = results.V_max;
+    ap_export.dVdt_max_V_s = results.dVdt_max / 1000; % Convert to V/s
+    ap_export.APD30 = results.APD30;
+    ap_export.APD50 = results.APD50;
+    ap_export.APD90 = results.APD90;
+
+    ap_table = struct2table(ap_export, 'AsArray', true);
+
+    % 3. Combine both tables horizontally
+    summary_table = [ca_table, ap_table];
+
+    % 4. Add identifiers so you know which conditions generated this row
+    summary_table.Model = model_to_run;
+    summary_table.Drug = drug_to_run;
+    summary_table.Dose = drug_dose;
+
+    % Move the identifiers to the first columns for easy reading
+    summary_table = movevars(summary_table, {'Model', 'Drug', 'Dose'}, 'Before', 1);
+
+    % 5. Write to Excel file
+    excel_filename = 'Simulation_Results_Log.xlsx';
+
+    % Use 'append' so that running the script multiple times adds new rows
+    % instead of overwriting the file.
+    if exist(excel_filename, 'file')
+        writetable(summary_table, excel_filename, 'WriteMode', 'append');
+    else
+        writetable(summary_table, excel_filename);
+    end
+
+    disp(['Results successfully exported to ', excel_filename]);
+    % ========================================================================
+
     disp('Analysis complete.');
 %%
     function results = CalculateAPMorphology(time, voltage)
