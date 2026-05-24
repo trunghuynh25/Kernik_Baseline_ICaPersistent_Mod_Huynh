@@ -15,7 +15,7 @@ load baseline_parameter_inputs
 % 2 = Model 2 (IKr + INa,L)
 % 3 = Model 3 (IKr + ICa,L)
 % 4 = Model 4 (All Three Defects)
-model_to_run = 4; % <--- CHANGE THIS NUMBER TO SELECT YOUR EXPERIMENT
+model_to_run = 0; % <--- CHANGE THIS NUMBER TO SELECT YOUR EXPERIMENT
 
 % --- 2. Define Parameter Indices ---
 g_Kr_index = 2;   % Conductance of IKr
@@ -94,7 +94,7 @@ end
 % 1 = Mexiletine (Target: INa Peak, INa Late)
 % 2 = Nifedipine (Target: ICaL Primary, ICaL Persistent)
 drug_to_run = 1; % <--- CHANGE THIS NUMBER TO SELECT YOUR DRUG
-drug_dose   = 10; % Enter dose (uM for Mexiletine, nM for Nifedipine)
+drug_dose   = 5; % Enter dose (uM for Mexiletine, nM for Nifedipine)
 
 if drug_to_run == 1
     % --- MEXILETINE ---
@@ -150,7 +150,7 @@ baseline_parameter_inputs = modified_params;
 %% iPSC_function
 
 options = odeset('MaxStep',1,'InitialStep',2e-2);
-run_time=10e3; 
+run_time=12e3; 
 [Time, values] = ode15s(@ipsc_function,[0, run_time],Y_init, options, baseline_parameter_inputs);
 Cai=values(:,3);
 Vm=values(:,1);
@@ -344,31 +344,23 @@ fprintf('%-30s | %-10.1f%%\n', 'Non-NCX (I_pCa)', ca_results.pct_ipca);
 %%
     function results = CalculateAPMorphology(time, voltage)
     % Calculates action potential morphology parameters using linear interpolation.
-    % CORRECTED VERSION: Assumes the 'time' vector is in microseconds (µs).
-
-    % --- NEW: Define a search window for the AP peak (in microseconds) ---
-    % 500 ms is a safe window, which equals 500,000 µs.
-    peak_search_window_us = 500000; 
+% --- CORRECTED: The 'time' vector is in milliseconds (ms), not microseconds ---
+    % 400 ms is a safe window to find the peak of a single beat
+    peak_search_window_ms = 400; 
 
     % --- Find Max Upstroke Velocity (dV/dt) to anchor the analysis ---
-    % dVdt will be in mV/µs
     dVdt = diff(voltage) ./ diff(time);
     [dVdt_max, idx_dVdt_max] = max(dVdt);
-    t_depol = time(idx_dVdt_max); % This is time of dVdt_max (reference for APD)
+    t_depol = time(idx_dVdt_max); 
 
     % --- MODIFIED: Search for the AP peak ONLY after the upstroke ---
-    % 1. Determine the average time step (sampling interval) in µs
-    sampling_interval_us = mean(diff(time));
+    sampling_interval_ms = mean(diff(time));
     
-    % 2. Calculate the window size in array indices
-    window_indices = round(peak_search_window_us / sampling_interval_us);
+    window_indices = round(peak_search_window_ms / sampling_interval_ms);
     search_start_idx = idx_dVdt_max;
     search_end_idx = min(search_start_idx + window_indices, length(voltage));
     
-    % 3. Find the peak voltage and its index within the defined window
     [V_max, local_idx_max] = max(voltage(search_start_idx:search_end_idx));
-    
-    % 4. Convert the local index back to the global index of the original trace
     idx_max = search_start_idx + local_idx_max - 1;
     t_peak = time(idx_max);
 
@@ -406,7 +398,18 @@ fprintf('%-30s | %-10.1f%%\n', 'Non-NCX (I_pCa)', ca_results.pct_ipca);
     repol_phase_time = time(idx_max:end);
     repol_phase_voltage = voltage(idx_max:end);
     
-    apd_levels = [30, 50, 90]; 
+    % --- NEW: Prevent searching into the next action potential ---
+    % Detect if a new upstroke happens before repolarization finishes
+    dVdt_repol = diff(repol_phase_voltage) ./ diff(repol_phase_time);
+    idx_next_beat = find(dVdt_repol > 10, 1, 'first'); % 10 V/s threshold for new beat
+    
+    if ~isempty(idx_next_beat)
+        % Truncate the repolarization search window right before the next beat
+        repol_phase_time = repol_phase_time(1:idx_next_beat);
+        repol_phase_voltage = repol_phase_voltage(1:idx_next_beat);
+    end
+    
+    apd_levels = [30, 50, 90];
     
     results.t_rep = zeros(length(apd_levels), 1);
     results.v_rep = zeros(length(apd_levels), 1);
