@@ -56,20 +56,16 @@ elseif model_to_run == 2
     % Apply IKr reduction
     modified_params(g_Kr_index) = modified_params(g_Kr_index) * (1 - 0.725);
 
-    % --- CORRECTED INa,L LOGIC ---
     % Apply 2.31-fold INa,L increase
     modified_params(C_persist_NaL_index) = baseline_C_persist_NaL * 2.31*3;
-    % --- END CORRECTION ---
 
 elseif model_to_run == 3
     plot_title = 'Model 3: IKr + ICa,L';
     % Apply IKr reduction
     modified_params(g_Kr_index) = modified_params(g_Kr_index) * (1 - 0.725);
 
-    % --- CORRECTED persistent non-inactivating ICa,L LOGIC ---
-    % Apply 2.29-fold ICa,L increase (from your previous query)
+    % Apply 2.29-fold ICa,L increase
     modified_params(C_persist_CaL_index) = baseline_C_persist_CaL * 2.29;
-    % --- END CORRECTION ---
     
 elseif model_to_run == 4
     plot_title = 'Model 4: All Three Defects';
@@ -104,7 +100,7 @@ if drug_to_run == 1
     Hill_Mex = 1;
 
     % SELECTIVITY SWITCHES: 1 = Apply Block, 0 = No Block
-    apply_mex_to_peak_INa = 0; % Originally 0
+    apply_mex_to_peak_INa = 1; % Originally 0
     apply_mex_to_late_INa = 1; % Mex has preferential block for late Na over peak
 
     if apply_mex_to_peak_INa
@@ -150,7 +146,7 @@ baseline_parameter_inputs = modified_params;
 %% iPSC_function
 
 options = odeset('MaxStep',1,'InitialStep',2e-2);
-run_time=15e3; 
+run_time=12e3; 
 [Time, values] = ode15s(@ipsc_function,[0, run_time],Y_init, options, baseline_parameter_inputs);
 Cai=values(:,3);
 Vm=values(:,1);
