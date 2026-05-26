@@ -20,10 +20,10 @@ model_names = {'Baseline (Isogenic Control)', 'Model 1 (IKr Defect)', ...
 
 % Define the 5 drug conditions to test for each model
 % drug_type: 0 = No Drug, 1 = Mexiletine, 2 = Nifedipine
-drug_types = [0, 1, 2]; 
-drug_doses = [0, 5, 100]; % uM for Mex, nM for Nif
-drug_labels = {'No Drug', 'Mexiletine 5 \muM', ...
-               'Nifedipine 100 nM'};
+drug_types = [0, 2, 2, 2, 2]; 
+drug_doses = [0, 10, 30 100, 200]; % uM for Mex, nM for Nif
+drug_labels = {'No Drug', 'Nifedipine 10 nM', ...
+               'Nifedipine 30 nM','Nifedipine 100 nM', 'Nifedipine 200 nM'};
 
 % Colors for traces: Black (No drug), Light/Dark Blue (Mex), Light/Dark Red (Nif)
 trace_colors = [0 0 0; 0.4 0.7 1; 0 0 0.8; 1 0.5 0.5; 0.8 0 0];
@@ -99,14 +99,14 @@ for model_id = 0:(num_models - 1)
         
         % --- 4. Run ODE Simulation ---
         options = odeset('MaxStep',1,'InitialStep',2e-2);
-        run_time = 6e3; % 6000 ms to ensure steady state beat capturing
+        run_time = 30e3; % 6000 ms to ensure steady state beat capturing
         [Time, values] = ode15s(@ipsc_function,[0, run_time], Y_init, options, modified_params);
         
         Vm = values(:,1);
         
-        % --- 5. Extract Beat & Align (0ms - 3000ms window) ---
-        inds_time_start = find(Time > 0, 1, 'first');
-        inds_time_end   = find(Time > 3000, 1, 'first');
+        % --- 5. Extract Beat & Align (0ms - 5000ms window) ---
+        inds_time_start = find(Time > 8000, 1, 'first');
+        inds_time_end   = find(Time > 13000, 1, 'first');
         
         beat_time_raw = Time(inds_time_start:inds_time_end);
         beat_vm_raw   = Vm(inds_time_start:inds_time_end);
@@ -133,7 +133,7 @@ for model_id = 0:(num_models - 1)
     title(model_names{model_id + 1});
     xlabel('Time (ms)');
     ylabel('Voltage (mV)');
-    xlim([-50 800]); 
+    xlim([-50 900]); 
     ylim([-90 50]);
     set(gca, 'box', 'off', 'tickdir', 'out');
     

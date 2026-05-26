@@ -116,12 +116,14 @@ for model_id = 0:(num_models - 1)
         aligned_time = beat_time_raw - results.t_depol;
         
         % --- 6. Plot Trace ---
-        line_style = '-'; 
         if current_drug == 0
-            line_width = 2.0; % Make baseline slightly thicker
+            line_style = '-';     % Solid line for No Drug control
+            line_width = 2.0;     % Thicker line to stand out
         else
-            line_width = 1.5;
+            line_style = '--';    % Dashed line for all Drug conditions
+            line_width = 1.5;     % Standard width
         end
+   
         
         plot(aligned_time, beat_vm_raw, 'Color', trace_colors(cond,:), ...
             'LineStyle', line_style, 'LineWidth', line_width);

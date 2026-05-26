@@ -89,8 +89,8 @@ end
 % 0 = No Drug (Control)
 % 1 = Mexiletine (Target: INa Peak, INa Late)
 % 2 = Nifedipine (Target: ICaL Primary, ICaL Persistent)
-drug_to_run = 0; % <--- CHANGE THIS NUMBER TO SELECT YOUR DRUG
-drug_dose   = 0; % Enter dose (uM for Mexiletine, nM for Nifedipine)
+drug_to_run = 2; % <--- CHANGE THIS NUMBER TO SELECT YOUR DRUG
+drug_dose   = 200; % Enter dose (uM for Mexiletine, nM for Nifedipine)
 
 if drug_to_run == 1
     % --- MEXILETINE ---
@@ -146,7 +146,7 @@ baseline_parameter_inputs = modified_params;
 %% iPSC_function
 
 options = odeset('MaxStep',1,'InitialStep',2e-2);
-run_time=12e3; 
+run_time=30e3; 
 [Time, values] = ode15s(@ipsc_function,[0, run_time],Y_init, options, baseline_parameter_inputs);
 Cai=values(:,3);
 Vm=values(:,1);

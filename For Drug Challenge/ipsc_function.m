@@ -62,7 +62,7 @@ C_persist_NaL = model_parameter_inputs(87); % New parameter for persistent INaL
 % for stim:
 cyclelength=1000; %1000ms = 1hz beating | originally 800ms
 i_stim_Amplitude = 3;   % pA/pF (in stim_mode) | originally 3
-i_stim_End = 15e3;   % milisecond (in stim_mode) | originally 10e3
+i_stim_End = 30e3;   % milisecond (in stim_mode) | originally 10e3
 i_stim_PulseDuration = 5;   % milisecond (in stim_mode) | originally 5
 i_stim_Start = 0;   % milisecond (in stim_mode)
 

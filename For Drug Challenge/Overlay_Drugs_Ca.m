@@ -19,14 +19,13 @@ model_names = {'Baseline (Isogenic Control)', 'Model 1 (IKr Defect)', ...
                'Model 4 (All Defects)'};
 
 % drug_type: 0 = No Drug, 1 = Mexiletine, 2 = Nifedipine
-drug_types  = [0, 1, 2]; 
-drug_doses  = [0, 5, 100]; % uM for Mex, nM for Nif
-
-drug_labels = {'No Drug', 'Mexiletine 5 \muM', ...
-               'Nifedipine 100 nM'};
+drug_types = [0, 2, 2, 2, 2]; 
+drug_doses = [0, 10, 30 100, 200]; % uM for Mex, nM for Nif
+drug_labels = {'No Drug', 'Nifedipine 10 nM', ...
+               'Nifedipine 30 nM', 'Nifedipine 100 nM', 'Nifedipine 200 nM'};
 
 % Colors for traces
-trace_colors = [0 0 0; 0.4 0.7 1; 1 0.5 0.5; 0.8 0 0];
+trace_colors = [0 0 0; 0.4 0.7 1; 0 0 0.8; 1 0.5 0.5; 0.8 0 0];
 
 % Setup Figure
 figure('Name', 'Drug Challenge Calcium Overlays', 'Color', 'w', 'Position', [100, 100, 1400, 800]);
@@ -87,15 +86,15 @@ for model_id = 0:(num_models - 1)
         
         % --- 4. Run ODE Simulation ---
         options = odeset('MaxStep',1,'InitialStep',2e-2);
-        run_time = 6e3; 
+        run_time = 30e3; 
         [Time, values] = ode15s(@ipsc_function,[0, run_time], Y_init, options, modified_params);
         
         % --- 5. Extract Vm (for alignment) and Cai (for plotting) ---
         Vm = values(:,1);
         Cai = values(:,3);
         
-        inds_time_start = find(Time > 0, 1, 'first');
-        inds_time_end   = find(Time > 3000, 1, 'first');
+        inds_time_start = find(Time > 8000, 1, 'first'); %original 0
+        inds_time_end   = find(Time > 13000, 1, 'first');%original 5000
         
         beat_time_raw = Time(inds_time_start:inds_time_end);
         beat_vm_raw   = Vm(inds_time_start:inds_time_end);
@@ -126,7 +125,7 @@ for model_id = 0:(num_models - 1)
     title(model_names{model_id + 1});
     xlabel('Time (ms)');
     ylabel('[Ca^{2+}]_i (nM)');
-    xlim([-50 800]); 
+    xlim([-50 1000]); 
     % Removed ylim to let MATLAB auto-scale the Ca peaks naturally
     set(gca, 'box', 'off', 'tickdir', 'out');
     
